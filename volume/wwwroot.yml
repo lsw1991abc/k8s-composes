@@ -1,0 +1,35 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: wwwroot
+  namespace: default
+  labels:
+    app: wwwroot
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /Users/wizard/k8s-volume/wwwroot
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: wwwroot
+  namespace: default
+  labels:
+    app: wwwroot
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      app: wwwroot
+

@@ -1,0 +1,35 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: timezone
+  namespace: default
+  labels:
+    app: timezone
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /Users/wizard/k8s-volume/common/timezone
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: timezone
+  namespace: default
+  labels:
+    app: timezone
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+  selector:
+    matchLabels:
+      app: timezone
+
