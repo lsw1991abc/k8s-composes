@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.6
+        args:
+          - "--ignore-db-dir=lost+found"
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: "123456"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+          - mountPath: /etc/timezone
+            name: timezone
+            subPath: timezone
+            readOnly: true
+          - mountPath: /etc/localtime
+            name: timezone
+            subPath: localtime
+            readOnly: true
+
+          - mountPath: /var/lib/mysql
+            name: mysql
+          - mountPath: /etc/mysql/my.cnf
+            name: mysql-conf
+            subPath: my.cnf
+
+      volumes:
+        - name: timezone
+          persistentVolumeClaim:
+            claimName: timezone
+        - name: mysql
+          persistentVolumeClaim:
+            claimName: mysql
+        - name: mysql-conf
+          hostPath:
+            path: /Users/wizard/k8s-volume/mysql/conf
