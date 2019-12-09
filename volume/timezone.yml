@@ -2,24 +2,24 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: timezone
-  namespace: default
+  namespace: mobe-cloud
   labels:
     app: timezone
 spec:
   storageClassName: manual
   capacity:
-    storage: 10Mi
+    storage: 3Mi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /Users/wizard/k8s-volume/common/timezone
+    path: /data/k8s-volume/common/timezone
 
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: timezone
-  namespace: default
+  namespace: mobe-cloud
   labels:
     app: timezone
 spec:
@@ -28,7 +28,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Mi
+      storage: 3Mi
   selector:
     matchLabels:
       app: timezone

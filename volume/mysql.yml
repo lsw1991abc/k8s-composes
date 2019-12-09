@@ -1,35 +1,35 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: mysql
-  namespace: default
+  name: mysql-data
+  namespace: mobe-cloud
   labels:
-    app: mysql
+    app: mysql-data
 spec:
   storageClassName: manual
   capacity:
-    storage: 2Gi
+    storage: 15Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /Users/wizard/k8s-volume/mysql/volume-mysql
+    path: /data/k8s-volume/mysql/data
 
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: mysql
-  namespace: default
+  name: mysql-data
+  namespace: mobe-cloud
   labels:
-    app: mysql
+    app: mysql-data
 spec:
   storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: 15Gi
   selector:
     matchLabels:
-      app: mysql
+      app: mysql-data
 
