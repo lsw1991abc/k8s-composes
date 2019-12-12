@@ -2,13 +2,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  namespace: default
+  namespace: mobe-cloud
 spec:
   type: NodePort
   ports:
-    - port: 22306
+    - port: 20002
       targetPort: 3306
       protocol: TCP
-      nodePort: 32306
+      nodePort: 30002
   selector:
     app: mysql

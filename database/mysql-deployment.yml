@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: default
+  namespace: mobe-cloud
 spec:
   selector:
     matchLabels:
@@ -13,38 +13,28 @@ spec:
         app: mysql
     spec:
       containers:
-      - name: mysql
-        image: mysql:5.6
-        args:
-          - "--ignore-db-dir=lost+found"
-        env:
-          - name: MYSQL_ROOT_PASSWORD
-            value: "123456"
-        ports:
-        - containerPort: 3306
-        volumeMounts:
-          - mountPath: /etc/timezone
-            name: timezone
-            subPath: timezone
-            readOnly: true
-          - mountPath: /etc/localtime
-            name: timezone
-            subPath: localtime
-            readOnly: true
-
-          - mountPath: /var/lib/mysql
-            name: mysql
-          - mountPath: /etc/mysql/my.cnf
-            name: mysql-conf
-            subPath: my.cnf
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "admin123"
+          volumeMounts:
+            - mountPath: /etc/localtime
+              name: timezone
+              subPath: localtime
+              readOnly: true
+            - mountPath: /var/lib/mysql
+              name: mysql-data
+            - mountPath: /etc/mysql
+              name: mysql-conf
 
       volumes:
         - name: timezone
           persistentVolumeClaim:
             claimName: timezone
-        - name: mysql
+        - name: mysql-data
           persistentVolumeClaim:
-            claimName: mysql
+            claimName: mysql-data
         - name: mysql-conf
           hostPath:
-            path: /Users/wizard/k8s-volume/mysql/conf
+            path: /data/k8s-volume/mysql/conf

@@ -14,6 +14,8 @@ spec:
   hostPath:
     path: /data/k8s-volume/mysql/data
 
+# chown 999:999 /data/k8s-volume/mysql/data
+
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
