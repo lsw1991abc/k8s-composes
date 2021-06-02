@@ -1,0 +1,69 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql-data
+  namespace: mw
+spec:
+  storageClassName: managed-nfs-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "admin123"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+#            - name: mysql-conf
+#              mountPath: /etc/mysql/conf.d
+#              readOnly: true
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 3306
+      targetPort: 3306
+      nodePort: 30003
+  selector:
+    app: mysql
