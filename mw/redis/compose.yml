@@ -1,0 +1,70 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redis-data
+  namespace: mw
+spec:
+  storageClassName: managed-nfs-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:6.2
+          command: ["redis-server", "/data/config/redis.conf"]
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: redis-conf
+              mountPath: /data/config
+              readOnly: true
+            - name: redis-data
+              mountPath: /data/redis-data
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-data
+        - name: redis-conf
+          configMap:
+            name: redis-conf-map
+            items:
+              - key: "redis.conf"
+                path: "redis.conf"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 6379
+      targetPort: 6379
+      nodePort: 30002
+  selector:
+    app: redis

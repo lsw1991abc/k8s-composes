@@ -25,12 +25,17 @@ spec:
         - "/bin/sh"
       args:
         - "-c"
-        - "touch /data/SUCCESS && exit 0 || exit 1"
+        - "echo $(date) > /data/SUCCESS && exit 0 || exit 1"
       volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
         - name: nfs-pvc
           mountPath: "/data"
   restartPolicy: "Never"
   volumes:
+    - name: localtime
+      hostPath:
+        path: /usr/share/zoneinfo/Asia/Shanghai
     - name: nfs-pvc
       persistentVolumeClaim:
         claimName: test-claim

@@ -76,6 +76,8 @@ spec:
         - name: nfs-client-provisioner
           image: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
           volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
             - name: nfs-client-root
               mountPath: /persistentvolumes
           env:
@@ -86,6 +88,9 @@ spec:
             - name: NFS_PATH
               value: /data
       volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
         - name: nfs-client-root
           nfs:
             server: 192.168.50.203
