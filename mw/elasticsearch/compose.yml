@@ -1,0 +1,243 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch01
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        flagno: elasticsearch01
+    spec:
+      containers:
+        - name: elasticsearch01
+          image: lsw1991abc/elasticsearch:7.10.1-ulimit
+          securityContext:
+            privileged: true
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/bash", "-c", "sysctl -w vm.max_map_count=262144; ulimit -l unlimited;" ]
+          env:
+            - name: "node.name"
+              value: "elasticsearch01"
+            - name: "cluster.name"
+              value: "es-mobe-cloud"
+            - name: "discovery.seed_hosts"
+              value: "elasticsearch02,elasticsearch03"
+            - name: "cluster.initial_master_nodes"
+              value: "elasticsearch01,elasticsearch02,elasticsearch03"
+            - name: "bootstrap.memory_lock"
+              value: "true"
+            - name: "ES_JAVA_OPTS"
+              value: "-Xms512m -Xmx512m"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: elasticsearch01-data
+              mountPath: /usr/share/elasticsearch/data
+            - name: elasticsearch01-logs
+              mountPath: /usr/share/elasticsearch/logs
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: elasticsearch01-data
+          persistentVolumeClaim:
+            claimName: elasticsearch01-data
+        - name: elasticsearch01-logs
+          persistentVolumeClaim:
+            claimName: elasticsearch01-logs
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch02
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        flagno: elasticsearch02
+    spec:
+      containers:
+        - name: elasticsearch02
+          image: lsw1991abc/elasticsearch:7.10.1-ulimit
+          securityContext:
+            privileged: true
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/bash", "-c", "sysctl -w vm.max_map_count=262144; ulimit -l unlimited;" ]
+          env:
+            - name: "node.name"
+              value: "elasticsearch02"
+            - name: "cluster.name"
+              value: "es-mobe-cloud"
+            - name: "discovery.seed_hosts"
+              value: "elasticsearch01,elasticsearch03"
+            - name: "cluster.initial_master_nodes"
+              value: "elasticsearch01,elasticsearch02,elasticsearch03"
+            - name: "bootstrap.memory_lock"
+              value: "true"
+            - name: "ES_JAVA_OPTS"
+              value: "-Xms512m -Xmx512m"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: elasticsearch02-data
+              mountPath: /usr/share/elasticsearch/data
+            - name: elasticsearch02-logs
+              mountPath: /usr/share/elasticsearch/logs
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: elasticsearch02-data
+          persistentVolumeClaim:
+            claimName: elasticsearch02-data
+        - name: elasticsearch02-logs
+          persistentVolumeClaim:
+            claimName: elasticsearch02-logs
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch03
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        flagno: elasticsearch03
+    spec:
+      containers:
+        - name: elasticsearch03
+          image: lsw1991abc/elasticsearch:7.10.1-ulimit
+          securityContext:
+            privileged: true
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/bash", "-c", "sysctl -w vm.max_map_count=262144; ulimit -l unlimited;" ]
+          env:
+            - name: "node.name"
+              value: "elasticsearch03"
+            - name: "cluster.name"
+              value: "es-mobe-cloud"
+            - name: "discovery.seed_hosts"
+              value: "elasticsearch01,elasticsearch02"
+            - name: "cluster.initial_master_nodes"
+              value: "elasticsearch01,elasticsearch02,elasticsearch03"
+            - name: "bootstrap.memory_lock"
+              value: "true"
+            - name: "ES_JAVA_OPTS"
+              value: "-Xms512m -Xmx512m"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: elasticsearch03-data
+              mountPath: /usr/share/elasticsearch/data
+            - name: elasticsearch03-logs
+              mountPath: /usr/share/elasticsearch/logs
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: elasticsearch03-data
+          persistentVolumeClaim:
+            claimName: elasticsearch03-data
+        - name: elasticsearch03-logs
+          persistentVolumeClaim:
+            claimName: elasticsearch03-logs
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch01
+  namespace: mw
+spec:
+  ports:
+    - port: 9200
+      targetPort: 9200
+      name: p9200
+    - port: 9300
+      targetPort: 9300
+      name: p9300
+  selector:
+    flagno: elasticsearch01
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch02
+  namespace: mw
+spec:
+  ports:
+    - port: 9200
+      targetPort: 9200
+      name: p9200
+    - port: 9300
+      targetPort: 9300
+      name: p9300
+  selector:
+    flagno: elasticsearch02
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch03
+  namespace: mw
+spec:
+  ports:
+    - port: 9200
+      targetPort: 9200
+      name: p9200
+    - port: 9300
+      targetPort: 9300
+      name: p9300
+  selector:
+    flagno: elasticsearch03
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 9200
+      targetPort: 9200
+      nodePort: 30005
+      name: p9200
+    - port: 9300
+      targetPort: 9300
+      nodePort: 30006
+      name: p9300
+  selector:
+    app: elasticsearch
