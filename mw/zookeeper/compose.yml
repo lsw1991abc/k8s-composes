@@ -1,0 +1,220 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper01
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+        flagno: zookeeper01
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+        - name: zookeeper01
+          image: zookeeper:3.7
+          env:
+            - name: "ZOO_MY_ID"
+              value: "1"
+            - name: "ZOO_SERVERS"
+              value: "server.1=0.0.0.0:2888:3888 server.2=zookeeper02:2888:3888 server.3=zookeeper03:2888:3888"
+            - name: "zk_quorum_listen_all_ips"
+              value: "true"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: zookeeper01-data
+              mountPath: /data
+            - name: zookeeper01-logs
+              mountPath: /datalog
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: zookeeper01-data
+          persistentVolumeClaim:
+            claimName: zookeeper01-data
+        - name: zookeeper01-logs
+          persistentVolumeClaim:
+            claimName: zookeeper01-logs
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper02
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+        flagno: zookeeper02
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+        - name: zookeeper02
+          image: zookeeper:3.7
+          env:
+            - name: "ZOO_MY_ID"
+              value: "2"
+            - name: "ZOO_SERVERS"
+              value: "server.1=zookeeper01:2888:3888 server.2=0.0.0.0:2888:3888 server.3=zookeeper03:2888:3888"
+            - name: "zk_quorum_listen_all_ips"
+              value: "true"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: zookeeper02-data
+              mountPath: /data
+            - name: zookeeper02-logs
+              mountPath: /datalog
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: zookeeper02-data
+          persistentVolumeClaim:
+            claimName: zookeeper02-data
+        - name: zookeeper02-logs
+          persistentVolumeClaim:
+            claimName: zookeeper02-logs
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper03
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+        flagno: zookeeper03
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+        - name: zookeeper03
+          image: zookeeper:3.7
+          env:
+            - name: "ZOO_MY_ID"
+              value: "3"
+            - name: "ZOO_SERVERS"
+              value: "server.1=zookeeper01:2888:3888 server.2=zookeeper02:2888:3888 server.3=0.0.0.0:2888:3888"
+            - name: "zk_quorum_listen_all_ips"
+              value: "true"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: zookeeper03-data
+              mountPath: /data
+            - name: zookeeper03-logs
+              mountPath: /datalog
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: zookeeper03-data
+          persistentVolumeClaim:
+            claimName: zookeeper03-data
+        - name: zookeeper03-logs
+          persistentVolumeClaim:
+            claimName: zookeeper03-logs
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper01
+  namespace: mw
+spec:
+  ports:
+    - port: 2888
+      targetPort: 2888
+      name: p2888
+    - port: 3888
+      targetPort: 3888
+      name: p3888
+    - port: 2181
+      targetPort: 2181
+      name: p2181
+  selector:
+    flagno: zookeeper01
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper02
+  namespace: mw
+spec:
+  ports:
+    - port: 2888
+      targetPort: 2888
+      name: p2888
+    - port: 3888
+      targetPort: 3888
+      name: p3888
+    - port: 2181
+      targetPort: 2181
+      name: p2181
+  selector:
+    flagno: zookeeper02
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper03
+  namespace: mw
+spec:
+  ports:
+    - port: 2888
+      targetPort: 2888
+      name: p2888
+    - port: 3888
+      targetPort: 3888
+      name: p3888
+    - port: 2181
+      targetPort: 2181
+      name: p2181
+  selector:
+    flagno: zookeeper03
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 2181
+      targetPort: 2181
+      nodePort: 30007
+  selector:
+    app: zookeeper
