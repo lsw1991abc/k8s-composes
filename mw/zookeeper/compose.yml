@@ -23,7 +23,7 @@ spec:
             - name: "ZOO_MY_ID"
               value: "1"
             - name: "ZOO_SERVERS"
-              value: "server.1=0.0.0.0:2888:3888 server.2=zookeeper02:2888:3888 server.3=zookeeper03:2888:3888"
+              value: "server.1=0.0.0.0:2888:3888;2181 server.2=zookeeper02:2888:3888;2181 server.3=zookeeper03:2888:3888;2181"
             - name: "zk_quorum_listen_all_ips"
               value: "true"
           volumeMounts:
@@ -72,7 +72,7 @@ spec:
             - name: "ZOO_MY_ID"
               value: "2"
             - name: "ZOO_SERVERS"
-              value: "server.1=zookeeper01:2888:3888 server.2=0.0.0.0:2888:3888 server.3=zookeeper03:2888:3888"
+              value: "server.1=zookeeper01:2888:3888;2181 server.2=0.0.0.0:2888:3888;2181 server.3=zookeeper03:2888:3888;2181"
             - name: "zk_quorum_listen_all_ips"
               value: "true"
           volumeMounts:
@@ -121,7 +121,7 @@ spec:
             - name: "ZOO_MY_ID"
               value: "3"
             - name: "ZOO_SERVERS"
-              value: "server.1=zookeeper01:2888:3888 server.2=zookeeper02:2888:3888 server.3=0.0.0.0:2888:3888"
+              value: "server.1=zookeeper01:2888:3888;2181 server.2=zookeeper02:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
             - name: "zk_quorum_listen_all_ips"
               value: "true"
           volumeMounts:
@@ -216,5 +216,6 @@ spec:
     - port: 2181
       targetPort: 2181
       nodePort: 30007
+      name: p2181
   selector:
     app: zookeeper
