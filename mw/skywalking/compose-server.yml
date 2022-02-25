@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skywalking-server
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: skywalking-server
+  template:
+    metadata:
+      labels:
+        app: skywalking-server
+    spec:
+      containers:
+        - name: skywalking-server
+          image: apache/skywalking-oap-server:8.9.1
+          env:
+            - name: "SW_STORAGE"
+              value: "elasticsearch"
+            - name: "SW_STORAGE_ES_CLUSTER_NODES"
+              value: "elasticsearch:9200"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skywalking-server
+  namespace: mw
+spec:
+  ports:
+    - port: 11800
+      targetPort: 11800
+      name: p11800
+    - port: 12800
+      targetPort: 12800
+      name: p12800
+    - port: 1234
+      targetPort: 1234
+      name: p1234
+  selector:
+    app: skywalking-server

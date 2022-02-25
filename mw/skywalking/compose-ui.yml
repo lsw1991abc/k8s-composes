@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skywalking-ui
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: skywalking-ui
+  template:
+    metadata:
+      labels:
+        app: skywalking-ui
+    spec:
+      containers:
+        - name: skywalking-ui
+          image: apache/skywalking-ui:8.9.1
+          env:
+            - name: "SW_OAP_ADDRESS"
+              value: "http://skywalking-server:12800"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skywalking-ui
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30011
+  selector:
+    app: skywalking-ui
