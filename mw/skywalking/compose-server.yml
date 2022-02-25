@@ -16,6 +16,10 @@ spec:
         - name: skywalking-server
           image: apache/skywalking-oap-server:8.9.1
           env:
+            - name: "SW_CLUSTER"
+              value: "zookeeper"
+            - name: "SW_CLUSTER_ZK_HOST_PORT"
+              value: "zookeeper:2181"
             - name: "SW_STORAGE"
               value: "elasticsearch"
             - name: "SW_STORAGE_ES_CLUSTER_NODES"
