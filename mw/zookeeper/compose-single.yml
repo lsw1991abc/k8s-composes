@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-single
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+        - name: zookeeper-single
+          image: zookeeper:3.7
+          env:
+            - name: "ZOO_MY_ID"
+              value: "1"
+            - name: "ZOO_SERVERS"
+              value: "server.1=0.0.0.0:2888:3888;2181"
+            - name: "zk_quorum_listen_all_ips"
+              value: "true"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: zookeeper-single-data
+              mountPath: /data
+            - name: zookeeper-single-logs
+              mountPath: /datalog
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: zookeeper-single-data
+          persistentVolumeClaim:
+            claimName: zookeeper-single-data
+        - name: zookeeper-single-logs
+          persistentVolumeClaim:
+            claimName: zookeeper-single-logs
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-single
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 2181
+      targetPort: 2181
+      nodePort: 30007
+      name: p2181
+  selector:
+    app: zookeeper

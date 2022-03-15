@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch-single
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch-single
+          image: lsw1991abc/elasticsearch:7.10.1-ulimit
+          securityContext:
+            privileged: true
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/bash", "-c", "sysctl -w vm.max_map_count=262144; ulimit -l unlimited;" ]
+          env:
+            - name: "node.name"
+              value: "elasticsearch-single"
+            - name: "cluster.name"
+              value: "es-mobe-cloud"
+            - name: "discovery.seed_hosts"
+              value: "elasticsearch-single"
+            - name: "cluster.initial_master_nodes"
+              value: "elasticsearch-single"
+            - name: "bootstrap.memory_lock"
+              value: "true"
+            - name: "ES_JAVA_OPTS"
+              value: "-Xms512m -Xmx512m"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: elasticsearch-single-data
+              mountPath: /usr/share/elasticsearch/data
+            - name: elasticsearch-single-logs
+              mountPath: /usr/share/elasticsearch/logs
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: elasticsearch-single-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-single-data
+        - name: elasticsearch-single-logs
+          persistentVolumeClaim:
+            claimName: elasticsearch-single-logs
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-single
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 9200
+      targetPort: 9200
+      nodePort: 30005
+      name: p9200
+    - port: 9300
+      targetPort: 9300
+      nodePort: 30006
+      name: p9300
+  selector:
+    app: elasticsearch
