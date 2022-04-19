@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: skywalking-ui
-          image: apache/skywalking-ui:8.9.1
+          image: apache/skywalking-ui:8.8.1
           env:
             - name: "SW_OAP_ADDRESS"
               value: "http://skywalking-server:12800"

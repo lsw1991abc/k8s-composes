@@ -19,11 +19,11 @@ spec:
             - name: "SW_CLUSTER"
               value: "zookeeper"
             - name: "SW_CLUSTER_ZK_HOST_PORT"
-              value: "zookeeper:2181"
+              value: "zookeeper-single:2181"
             - name: "SW_STORAGE"
               value: "elasticsearch"
             - name: "SW_STORAGE_ES_CLUSTER_NODES"
-              value: "elasticsearch:9200"
+              value: "elasticsearch-single:9200"
           volumeMounts:
             - name: localtime
               mountPath: /etc/localtime
@@ -41,10 +41,12 @@ metadata:
   name: skywalking-server
   namespace: mw
 spec:
+  type: NodePort
   ports:
     - port: 11800
       targetPort: 11800
       name: p11800
+      nodePort: 30013
     - port: 12800
       targetPort: 12800
       name: p12800
