@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: kafka-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-ui
+    spec:
+      containers:
+        - name: kafka-ui
+          image: wdkang/kafka-console-ui:v1.0.4
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: kafka-ui-data
+              mountPath: /app/data
+            - name: kafka-ui-logs
+              mountPath: /app/log
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: kafka-ui-data
+          persistentVolumeClaim:
+            claimName: kafka-ui-data
+        - name: kafka-ui-logs
+          persistentVolumeClaim:
+            claimName: kafka-ui-logs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 7766
+      targetPort: 7766
+      nodePort: 30016
+  selector:
+    app: kafka-ui
+
+
