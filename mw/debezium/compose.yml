@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debezium-connect
+  namespace: mw
+spec:
+  selector:
+    matchLabels:
+      app: debezium-connect
+  template:
+    metadata:
+      labels:
+        app: debezium-connect
+    spec:
+      containers:
+        - name: debezium-connect
+          image: debezium/connect:1.9
+          env:
+            - name: "GROUP_ID"
+              value: "1"
+            - name: "CONFIG_STORAGE_TOPIC"
+              value: "connect-configs"
+            - name: "OFFSET_STORAGE_TOPIC"
+              value: "connect-offsets"
+            - name: "BOOTSTRAP_SERVERS"
+              value: "kafka-single:30008"
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+      nodeSelector:
+        master: "true"
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: debezium-connect
+  namespace: mw
+spec:
+  type: NodePort
+  ports:
+    - port: 8083
+      targetPort: 8083
+      nodePort: 30017
+  selector:
+    app: debezium-connect
