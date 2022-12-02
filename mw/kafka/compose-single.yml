@@ -21,7 +21,7 @@ spec:
             - name: "KAFKA_CFG_LISTENERS"
               value: "PLAINTEXT://0.0.0.0:9092"
             - name: "KAFKA_CFG_ADVERTISED_LISTENERS"
-              value: "PLAINTEXT://kafka-single:30008"
+              value: "PLAINTEXT://kafka-single.mw.svc.cluster.local:30008"
             - name: "KAFKA_CFG_ZOOKEEPER_CONNECT"
               value: "zookeeper-single:2181"
             - name: "ALLOW_PLAINTEXT_LISTENER"
