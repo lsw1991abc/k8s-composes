@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: kafka-ui
-          image: wdkang/kafka-console-ui:v1.0.4
+          image: wdkang/kafka-console-ui:v1.0.8
           volumeMounts:
             - name: localtime
               mountPath: /etc/localtime
@@ -48,5 +48,3 @@ spec:
       nodePort: 30016
   selector:
     app: kafka-ui
-
-
