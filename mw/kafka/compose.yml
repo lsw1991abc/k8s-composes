@@ -1,59 +1,25 @@
-apiVersion: apps/v1
-kind: Deployment
+kind: PersistentVolumeClaim
+apiVersion: v1
 metadata:
-  name: kafka01
+  name: kafka-data
   namespace: mw
 spec:
-  selector:
-    matchLabels:
-      app: kafka
-  template:
-    metadata:
-      labels:
-        app: kafka
-        flagno: kafka01
-    spec:
-      containers:
-        - name: kafka01
-          image: bitnami/kafka:3.1.0
-          env:
-            - name: "KAFKA_CFG_BROKER_ID"
-              value: "1"
-            - name: "KAFKA_CFG_LISTENERS"
-              value: "PLAINTEXT://0.0.0.0:9092"
-            - name: "KAFKA_CFG_ADVERTISED_LISTENERS"
-              value: "PLAINTEXT://kafka01:30008"
-            - name: "KAFKA_CFG_ZOOKEEPER_CONNECT"
-              value: "zookeeper:2181"
-            - name: "ALLOW_PLAINTEXT_LISTENER"
-              value: "yes"
-          volumeMounts:
-            - name: localtime
-              mountPath: /etc/localtime
-            - name: kafka01-data
-              mountPath: /bitnami/kafka/data
-            - name: kafka01-logs
-              mountPath: /bitnami/kafka/logs
-      nodeSelector:
-        master: "true"
-      volumes:
-        - name: localtime
-          hostPath:
-            path: /usr/share/zoneinfo/Asia/Shanghai
-        - name: kafka01-data
-          persistentVolumeClaim:
-            claimName: kafka01-data
-        - name: kafka01-logs
-          persistentVolumeClaim:
-            claimName: kafka01-logs
+  storageClassName: managed-nfs-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: kafka02
+  name: kafka-single
   namespace: mw
 spec:
+  serviceName: kafka-single
+  replicas: 1
   selector:
     matchLabels:
       app: kafka
@@ -61,133 +27,97 @@ spec:
     metadata:
       labels:
         app: kafka
-        flagno: kafka02
     spec:
+      initContainers:
+        - name: kafka-init
+          image: apache/kafka:4.1.1
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /opt/kafka/data/meta.properties ]; then
+                echo "Starting format with cluster ID: $(/opt/kafka/bin/kafka-storage.sh random-uuid)"
+                CLUSTER_ID=$(/opt/kafka/bin/kafka-storage.sh random-uuid)
+                /opt/kafka/bin/kafka-storage.sh format -t $CLUSTER_ID -c /opt/kafka/config/server.properties || echo "Format failed"
+                echo "Format completed. Listing directory:"
+                ls -la /opt/kafka/data
+                if [ -f /opt/kafka/data/meta.properties ]; then
+                  echo "meta.properties created successfully:"
+                  cat /opt/kafka/data/meta.properties
+                else
+                  echo "ERROR: meta.properties not created!"
+                fi
+              else
+                echo "meta.properties already exists, skipping format."
+              fi
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /opt/kafka/data
+            - name: kafka-config
+              mountPath: /opt/kafka/config/server.properties
+              subPath: server.properties
       containers:
-        - name: kafka02
-          image: bitnami/kafka:3.1.0
-          env:
-            - name: "KAFKA_CFG_BROKER_ID"
-              value: "2"
-            - name: "KAFKA_CFG_LISTENERS"
-              value: "PLAINTEXT://0.0.0.0:9092"
-            - name: "KAFKA_CFG_ADVERTISED_LISTENERS"
-              value: "PLAINTEXT://kafka02:30009"
-            - name: "KAFKA_CFG_ZOOKEEPER_CONNECT"
-              value: "zookeeper:2181"
-            - name: "ALLOW_PLAINTEXT_LISTENER"
-              value: "yes"
+        - name: kafka-single
+          image: apache/kafka:4.1.1
+          command:
+            - sh
+            - -c
+            - |
+              exec /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+          ports:
+            - containerPort: 9092
+              name: kafka-sasl
+            - containerPort: 9093
+              name: kafka-raft
           volumeMounts:
             - name: localtime
               mountPath: /etc/localtime
-            - name: kafka02-data
-              mountPath: /bitnami/kafka/data
-            - name: kafka02-logs
-              mountPath: /bitnami/kafka/logs
+            - name: kafka-data
+              mountPath: /opt/kafka/data
+            - name: kafka-config
+              mountPath: /opt/kafka/config/server.properties
+              subPath: server.properties
       nodeSelector:
         master: "true"
       volumes:
         - name: localtime
           hostPath:
             path: /usr/share/zoneinfo/Asia/Shanghai
-        - name: kafka02-data
+        - name: kafka-data
           persistentVolumeClaim:
-            claimName: kafka02-data
-        - name: kafka02-logs
-          persistentVolumeClaim:
-            claimName: kafka02-logs
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kafka03
-  namespace: mw
-spec:
-  selector:
-    matchLabels:
-      app: kafka
-  template:
-    metadata:
-      labels:
-        app: kafka
-        flagno: kafka03
-    spec:
-      containers:
-        - name: kafka03
-          image: bitnami/kafka:3.1.0
-          env:
-            - name: "KAFKA_CFG_BROKER_ID"
-              value: "3"
-            - name: "KAFKA_CFG_LISTENERS"
-              value: "PLAINTEXT://0.0.0.0:9092"
-            - name: "KAFKA_CFG_ADVERTISED_LISTENERS"
-              value: "PLAINTEXT://kafka03:30010"
-            - name: "KAFKA_CFG_ZOOKEEPER_CONNECT"
-              value: "zookeeper:2181"
-            - name: "ALLOW_PLAINTEXT_LISTENER"
-              value: "yes"
-          volumeMounts:
-            - name: localtime
-              mountPath: /etc/localtime
-            - name: kafka03-data
-              mountPath: /bitnami/kafka/data
-            - name: kafka03-logs
-              mountPath: /bitnami/kafka/logs
-      nodeSelector:
-        master: "true"
-      volumes:
-        - name: localtime
-          hostPath:
-            path: /usr/share/zoneinfo/Asia/Shanghai
-        - name: kafka03-data
-          persistentVolumeClaim:
-            claimName: kafka03-data
-        - name: kafka03-logs
-          persistentVolumeClaim:
-            claimName: kafka03-logs
+            claimName: kafka-data
+        - name: kafka-config
+          configMap:
+            name: kafka-config
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka01
+  name: kafka-single
+  namespace: mw
+spec:
+  clusterIP: None
+  selector:
+    app: kafka
+  ports:
+    - name: kafka-sasl
+      port: 9092
+    - name: kafka-raft
+      port: 9093
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-single-external
   namespace: mw
 spec:
   type: NodePort
+  selector:
+    app: kafka
   ports:
-    - port: 30008
+    - name: kafka-sasl
+      port: 9092
       targetPort: 9092
       nodePort: 30008
-  selector:
-    flagno: kafka01
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka02
-  namespace: mw
-spec:
-  type: NodePort
-  ports:
-    - port: 30009
-      targetPort: 9092
-      nodePort: 30009
-  selector:
-    flagno: kafka02
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka03
-  namespace: mw
-spec:
-  type: NodePort
-  ports:
-    - port: 30010
-      targetPort: 9092
-      nodePort: 30010
-  selector:
-    flagno: kafka03
