@@ -69,6 +69,8 @@ spec:
               name: kafka-sasl
             - containerPort: 9093
               name: kafka-raft
+            - containerPort: 30008
+              name: kafka-external
           volumeMounts:
             - name: localtime
               mountPath: /etc/localtime
@@ -117,7 +119,7 @@ spec:
   selector:
     app: kafka
   ports:
-    - name: kafka-sasl
-      port: 9092
-      targetPort: 9092
+    - name: kafka-external
+      port: 30008
+      targetPort: 30008
       nodePort: 30008
